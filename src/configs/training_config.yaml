@@ -1,0 +1,109 @@
+# Training Configuration for Multimodal Virality Predictor
+# Based on implementation_plan.md lines 237-271
+
+model:
+  name: "multimodal_virality_predictor"
+  version: "v1.0"
+  architecture: "bert_resnet_fusion"
+
+  # Model hyperparameters
+  num_scalar_features: 10
+  freeze_encoders: true  # Start with frozen encoders
+  fusion_hidden_dims: [1024, 256]
+  dropout_rates: [0.3, 0.2]
+  use_text: true
+  use_vision: true
+
+data:
+  # Data paths
+  train_path: "data/processed/train.parquet"
+  val_path: "data/processed/val.parquet"
+  test_path: "data/processed/test.parquet"
+  image_dir: "data/raw/thumbnails"
+
+  # Dataset parameters
+  text_column: "title"
+  text_max_length: 128
+  image_size: 224
+  label_column: "is_viral"
+  velocity_column: "engagement_velocity"
+
+  # DataLoader parameters
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+
+training:
+  # Training duration
+  epochs: 15
+
+  # Optimizer settings
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  optimizer: "adamw"
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+  # Learning rate schedule
+  warmup_steps: 500
+  scheduler: "linear_warmup_cosine"
+
+  # Gradient settings
+  max_grad_norm: 1.0
+  gradient_accumulation_steps: 1
+
+  # Loss weights (multi-task learning)
+  classification_weight: 0.7
+  regression_weight: 0.3
+
+  # Early stopping
+  patience: 3
+  min_delta: 0.001
+  monitor_metric: "val_auroc"
+  mode: "max"  # maximize AUROC
+
+  # Checkpointing
+  save_top_k: 3  # Keep top 3 checkpoints
+  save_last: true
+  checkpoint_dir: "experiments/checkpoints"
+
+hardware:
+  device: "cuda"  # "cuda", "cpu", or "mps" (for Mac M1/M2)
+  mixed_precision: true  # Use automatic mixed precision (AMP)
+  gradient_checkpointing: false  # Enable if OOM occurs
+
+logging:
+  experiment_name: "viral_shorts_prediction"
+  run_name: "multimodal_v1"
+  log_every_n_steps: 50
+  val_check_interval: 1.0  # Validate every epoch
+
+  # MLflow settings
+  mlflow_tracking_uri: "experiments/mlruns"
+  log_model: true
+  log_artifacts: true
+
+# Fine-tuning configuration (used after initial training)
+fine_tuning:
+  unfreeze_after_epoch: 10
+  text_layers_to_unfreeze: 2  # Unfreeze last 2 BERT layers
+  vision_blocks_to_unfreeze: 1  # Unfreeze last ResNet block
+  fine_tune_lr: 5.0e-6  # Lower learning rate for fine-tuning
+  fine_tune_epochs: 5
+
+# Baseline model configuration
+baseline:
+  max_features: 5000
+  ngram_range: [1, 1]  # Unigrams only
+  max_iter: 1000
+  class_weight: "balanced"
+
+# Evaluation metrics thresholds
+success_criteria:
+  baseline_auroc: 0.65
+  multimodal_auroc: 0.75
+  velocity_mae: 0.3
+  inference_time_ms: 100
+
+# Random seed for reproducibility
+seed: 42

@@ -1,0 +1,20 @@
+graph TB
+    A[Title] --> B[BERT Tokenizer<br/>max_len=128]
+    B --> C[BERT-base<br/>12 layers, 768-dim]
+    C --> D[CLS Token<br/>768-dim]
+
+    E[18 Scalars] --> F[Feature Vector<br/>18-dim]
+
+    D --> G[Concat<br/>786-dim]
+    F --> G
+
+    G --> H[FC1: 786→1024<br/>ReLU, Dropout 0.3]
+    H --> I[FC2: 1024→256<br/>ReLU, Dropout 0.2]
+
+    I --> J[Classification<br/>FC: 256→2, Softmax]
+    I --> K[Regression<br/>FC: 256→1, Sigmoid]
+
+    style C fill:#e1f5ff
+    style G fill:#ffffcc
+    style J fill:#ccffcc
+    style K fill:#ccffcc

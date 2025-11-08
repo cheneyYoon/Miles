@@ -154,6 +154,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+#documentations
+docs/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -205,3 +208,53 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Machine Learning & Data Science
+# Data files (large datasets should not be in git)
+data/raw/
+data/processed/
+data/splits/
+*.parquet
+*.csv
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Model checkpoints
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pb
+models/checkpoints/
+models/pretrained/
+
+# MLflow experiments
+experiments/
+mlruns/
+mlartifacts/
+
+# DVC cache
+.dvc/
+*.dvc
+
+# Weights & Biases
+wandb/
+
+# TensorBoard logs
+runs/
+logs/
+tensorboard/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+!docs/images/*.png
+!docs/images/*.jpg

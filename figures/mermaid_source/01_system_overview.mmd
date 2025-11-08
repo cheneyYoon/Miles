@@ -1,0 +1,14 @@
+graph LR
+    A[Video Title] --> B[BERT-base<br/>768-dim]
+    C[18 Scalar Features<br/>engagement, temporal] --> D[Feature Vector]
+
+    B --> E[Fusion MLP<br/>1024→256]
+    D --> E
+
+    E --> F[Classification<br/>Viral/Non-Viral]
+    E --> G[Regression<br/>Engagement Velocity]
+
+    style B fill:#e1f5ff
+    style E fill:#fff4e1
+    style F fill:#ccffcc
+    style G fill:#ccffcc
