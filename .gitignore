@@ -258,3 +258,6 @@ tensorboard/
 *.bmp
 !docs/images/*.png
 !docs/images/*.jpg
+
+# OS generated files
+.DS_Store
