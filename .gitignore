@@ -1,61 +1,260 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
-**/.env
-
+# ============================================
 # Python
+# ============================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Distribution / packaging
 .Python
 venv/
 env/
 ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 *.egg-info/
+.eggs/
 dist/
 build/
-.pytest_cache/
+develop-eggs/
+downloads/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg
 
-# Node.js
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+pytest_debug.log
+coverage.xml
+*.cover
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# ============================================
+# Machine Learning / Data Science
+# ============================================
+# Model files (PyTorch, TensorFlow, etc.)
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.pb
+*.onnx
+*.tflite
+*.safetensors
+
+# Model directories (checkpoints and saved models, NOT source code)
+checkpoints/
+saved_models/
+experiments/
+mlruns/
+runs/
+wandb/
+lightning_logs/
+
+# Data files
+*.parquet
+*.feather
+*.csv
+*.tsv
+*.npy
+*.npz
+data/raw/
+data/processed/
+data/interim/
+data/external/
+datasets/
+
+# Project-specific ML directories (explicit ignore)
+# These are critical - they contain large datasets and trained models
+model/data/**
+!model/data/.gitkeep
+model/experiments/**
+!model/experiments/.gitkeep
+
+# Inference service: ignore model checkpoints but NOT Python source code
+inference-service/models/**
+!inference-service/models/.gitkeep
+# IMPORTANT: Track Python model architecture files (negation pattern)
+!inference-service/src/models/
+!inference-service/src/models/*.py
+!inference-service/src/models/**/*.py
+
+# ============================================
+# Node.js / JavaScript
+# ============================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.pnp.*
+package-lock.json
 
 # Next.js
 .next/
 out/
 .vercel
+.turbo
 
-# ML / Data
-*.pkl
-*.h5
-*.onnx
-checkpoints/
-experiments/
-mlruns/
-*.parquet
-data/raw/
-data/processed/
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+**/.env
+*.env
 
-# IDE
+# ============================================
+# IDE / Editor
+# ============================================
+# VSCode
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
+*~
+.*.swp
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ============================================
+# OS Files
+# ============================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# Supabase
-supabase/.temp/
-supabase/.branches/
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Logs
+# Linux
+.directory
+.Trash-*
+
+# ============================================
+# Logs & Databases
+# ============================================
 *.log
+*.sql
+*.sqlite
+*.sqlite3
+*.db
 
-# Temporary files
+# ============================================
+# Temporary Files
+# ============================================
 tmp/
 temp/
 *.tmp
+*.bak
+*.cache
+*.temp
+
+# ============================================
+# Supabase
+# ============================================
+supabase/.temp/
+supabase/.branches/
+
+# ============================================
+# Docker
+# ============================================
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# Misc
+# ============================================
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.a
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Large media files (optional - comment out if needed)
+# *.mp4
+# *.mov
+# *.avi
+# *.webm
+# *.mp3
+# *.wav
