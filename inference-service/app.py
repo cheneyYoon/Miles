@@ -3,6 +3,10 @@ Miles Inference API
 FastAPI service for multimodal virality prediction
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 import os
 import time
 import logging

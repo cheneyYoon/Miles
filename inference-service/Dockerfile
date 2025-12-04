@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app.py .
+COPY src/ src/
 COPY models/ models/
 
 # Expose port 7860 (HuggingFace Spaces default)
