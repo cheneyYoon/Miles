@@ -15,46 +15,40 @@ export default function Home() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setRecommendations([])
+    setTopCandidates([])
 
-    // TODO: Call Supabase Edge Function for recommendations (Phase 4)
-    // For now, return mock data
-    setTimeout(() => {
-      setRecommendations([
+    try {
+      // Call Supabase Edge Function for real recommendations
+      const { data, error: funcError } = await supabase.functions.invoke(
+        'generate-recommendations',
         {
-          title: '5 Tech Trends That Will Change Everything in 2025',
-          reasoning: 'Based on analysis of 50+ viral tech videos, short countdown formats with bold predictions perform exceptionally well. Your timing aligns with year-end content trends.'
-        },
-        {
-          title: 'I Tested Every AI Tool So You Don\'t Have To',
-          reasoning: 'Comparison videos with first-person testing show 3x higher engagement. The "so you don\'t have to" formula creates immediate value proposition in the title.'
-        },
-        {
-          title: 'This Hidden iPhone Feature is a Game Changer',
-          reasoning: 'Mystery-driven titles with product-specific tips average 85% viral score. Appeals to curiosity while targeting a massive audience (iPhone users).'
+          body: {
+            topic,
+            vibe: vibe || null,
+            userId: null  // TODO: Add auth in future
+          }
         }
-      ])
-      setTopCandidates([
-        {
-          title: 'iPhone 15 Pro - 10 Features Apple Didn\'t Tell You',
-          thumbnail_url: 'https://images.unsplash.com/photo-1592286927505-b0c2d374eb84?w=400&h=300&fit=crop',
-          miles_score: 0.89,
-          view_count: 2400000
-        },
-        {
-          title: 'ChatGPT Just Changed Everything (Again)',
-          thumbnail_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop',
-          miles_score: 0.87,
-          view_count: 1800000
-        },
-        {
-          title: 'Why Everyone is Switching to This App',
-          thumbnail_url: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=300&fit=crop',
-          miles_score: 0.85,
-          view_count: 1500000
-        }
-      ])
+      )
+
+      if (funcError) {
+        console.error('Edge Function error:', funcError)
+        throw new Error(funcError.message || 'Failed to generate recommendations')
+      }
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      console.log('Recommendations received:', data)
+      setRecommendations(data.recommendations || [])
+      setTopCandidates(data.topCandidates || [])
+    } catch (err: any) {
+      console.error('Error:', err)
+      setError(err.message || 'Failed to generate recommendations. Please try again.')
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   return (
