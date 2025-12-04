@@ -38,7 +38,7 @@ class ScrapeRequest(BaseModel):
     max_duration: int = Field(60, description="Maximum video duration in seconds", ge=1, le=120)
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "topic": "skateboarding tricks",
                 "max_results": 20,
@@ -53,7 +53,7 @@ class ScrapeMultipleRequest(BaseModel):
     max_results_per_topic: int = Field(15, description="Max videos per topic", ge=1, le=50)
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "topics": ["tech reviews", "cooking recipes", "fitness tips"],
                 "max_results_per_topic": 15
