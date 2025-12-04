@@ -1,15 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase, type Recommendation, type TopCandidate } from '@/lib/supabase'
+
+interface ResponseMeta {
+  videos_analyzed?: number
+  from_cache?: boolean
+  avg_viral_score?: string
+  processing_time_ms?: number
+  topic_searched?: string
+}
 
 export default function Home() {
   const [topic, setTopic] = useState('')
   const [vibe, setVibe] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState('')
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [topCandidates, setTopCandidates] = useState<TopCandidate[]>([])
+  const [meta, setMeta] = useState<ResponseMeta | null>(null)
   const [error, setError] = useState('')
+  const [estimatedTime, setEstimatedTime] = useState(30)
+
+  // Loading progress simulation
+  useEffect(() => {
+    if (!loading) return
+
+    const stages = [
+      { time: 0, message: 'Scraping YouTube for trending videos...' },
+      { time: 10000, message: 'Analyzing video patterns with AI...' },
+      { time: 20000, message: 'Running virality predictions...' },
+      { time: 30000, message: 'Generating personalized recommendations...' }
+    ]
+
+    const timers = stages.map(stage =>
+      setTimeout(() => {
+        if (loading) setLoadingProgress(stage.message)
+      }, stage.time)
+    )
+
+    return () => timers.forEach(clearTimeout)
+  }, [loading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -17,11 +48,16 @@ export default function Home() {
     setError('')
     setRecommendations([])
     setTopCandidates([])
+    setMeta(null)
+    setLoadingProgress('Initializing search...')
+    setEstimatedTime(45) // Estimate 45 seconds for dynamic scraping
+
+    const startTime = Date.now()
 
     try {
-      // Call Supabase Edge Function for real recommendations
+      // Call new scrape-and-recommend Edge Function
       const { data, error: funcError } = await supabase.functions.invoke(
-        'generate-recommendations',
+        'scrape-and-recommend',
         {
           body: {
             topic,
@@ -40,14 +76,18 @@ export default function Home() {
         throw new Error(data.error)
       }
 
-      console.log('Recommendations received:', data)
+      const actualTime = Math.round((Date.now() - startTime) / 1000)
+      console.log(`Completed in ${actualTime}s, recommendations:`, data)
+
       setRecommendations(data.recommendations || [])
       setTopCandidates(data.topCandidates || [])
+      setMeta(data.meta || null)
     } catch (err: any) {
       console.error('Error:', err)
       setError(err.message || 'Failed to generate recommendations. Please try again.')
     } finally {
       setLoading(false)
+      setLoadingProgress('')
     }
   }
 
@@ -120,8 +160,25 @@ export default function Home() {
           )}
         </button>
 
+        {loading && (
+          <div className="mt-4 p-5 bg-blue-50 border-2 border-blue-200 rounded-xl">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"/>
+              <p className="text-blue-800 font-medium">{loadingProgress}</p>
+            </div>
+            <div className="flex items-center justify-between text-sm text-blue-600">
+              <span>⏱️ Estimated time: ~{estimatedTime}s</span>
+              <span className="text-xs">First request may take longer (cold start)</span>
+            </div>
+            <div className="mt-3 text-xs text-blue-500">
+              💡 Tip: Results are cached for 6 hours - repeated searches will be instant!
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700">
+            <p className="font-semibold mb-1">❌ Error</p>
             {error}
           </div>
         )}
@@ -129,6 +186,38 @@ export default function Home() {
 
       {recommendations.length > 0 && (
         <div className="max-w-4xl mx-auto space-y-8">
+          {/* Metadata Banner */}
+          {meta && (
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center space-x-2">
+                  {meta.from_cache ? (
+                    <>
+                      <span className="text-2xl">⚡</span>
+                      <div>
+                        <p className="text-sm font-semibold text-green-800">Instant Results (Cached)</p>
+                        <p className="text-xs text-green-600">Data from recent search</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl">🔥</span>
+                      <div>
+                        <p className="text-sm font-semibold text-blue-800">Fresh Data</p>
+                        <p className="text-xs text-blue-600">Just scraped from YouTube</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-600">
+                  <span>📊 {meta.videos_analyzed || 0} videos analyzed</span>
+                  <span>⭐ {(parseFloat(meta.avg_viral_score || '0') * 100).toFixed(0)}% avg viral score</span>
+                  <span>⏱️ {((meta.processing_time_ms || 0) / 1000).toFixed(1)}s</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <section>
             <h2 className="text-3xl font-bold mb-6 text-gray-800">
               Your Viral Video Ideas

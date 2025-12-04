@@ -43,13 +43,16 @@ Miles/
 │   ├── public/                    # Static assets
 │   └── package.json               # Node dependencies
 │
-├── scraper/                        # Automated data collection
+├── scraper/                        # Hybrid data collection (automated + on-demand)
 │   ├── scraper.py                 # YouTube Shorts scraper (yt-dlp)
+│   ├── scraper_module.py          # Reusable scraper logic
+│   ├── api.py                     # Supabase Edge Function for on-demand scraping
 │   ├── trigger_inference.py       # Inference trigger script
 │   ├── .github/workflows/         # CRON job configuration
 │   └── requirements.txt           # Scraper dependencies
 │
 ├── supabase/                       # Backend database
+│   ├── functions/                 # Edge Functions (on-demand scraper)
 │   └── migrations/                # Database schema migrations
 │
 ├── .github/workflows/              # CI/CD pipelines
@@ -94,6 +97,7 @@ Miles/
 - **Stack:** Next.js 14, TypeScript, TailwindCSS
 - **Features:**
   - Topic/vibe input for video ideas
+  - Keyword-based scraping (triggers on-demand YouTube Shorts scraping)
   - Real-time inference via API
   - Result visualization with confidence scores
   - Historical prediction tracking
@@ -102,12 +106,20 @@ Miles/
 - **Type:** PostgreSQL with Row Level Security
 - **Tables:** 5 (videos, predictions, users, analytics, scraped_metadata)
 - **Indexes:** 14 performance indexes
-- **Edge Functions:** Serverless functions for complex queries
+- **Edge Functions:**
+  - Serverless functions for complex queries
+  - On-demand scraping trigger (keyword-based)
 
-### 6. Data Collection
-- **Automation:** GitHub Actions CRON (every 6 hours)
+### 6. Data Collection (Hybrid Approach)
+- **Automated Scraping:**
+  - GitHub Actions CRON (every 6 hours)
+  - Scrapes trending YouTube Shorts
+  - Success Rate: 100% (72 videos scraped)
+- **On-Demand Scraping:**
+  - User-triggered via keyword input in UI
+  - Supabase Edge Function invokes scraper
+  - Fetches top 10 results for user-specified keywords
 - **Tool:** yt-dlp for metadata scraping
-- **Success Rate:** 100% (72 videos scraped)
 - **Flow:** Scraper → Inference Service → Database (< 2 minutes)
 
 ## Technology Stack
@@ -147,7 +159,7 @@ Miles/
 - [x] Dockerized deployment
 - [x] Next.js frontend application
 - [x] Supabase database setup
-- [x] Automated scraping pipeline (GitHub Actions)
+- [x] Hybrid scraping pipeline (automated CRON + on-demand keyword-based)
 - [x] Production deployment (all services live)
 - [x] Final report (4-page LaTeX document)
 
@@ -192,19 +204,26 @@ Miles/
          ▼
 ┌─────────────────┐      ┌──────────────────┐
 │  Vercel (Next)  │─────▶│  Supabase (DB)   │
-└────────┬────────┘      └──────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  HF Spaces API  │
-│  (Inference)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐      ┌──────────────────┐
-│  GitHub Actions │─────▶│  YouTube/TikTok  │
-│  (Scraper)      │      │  (Data Source)   │
-└─────────────────┘      └──────────────────┘
+└────────┬────────┘      └─────────┬────────┘
+         │                         │
+         ▼                         │
+┌─────────────────┐                │
+│  HF Spaces API  │                │
+│  (Inference)    │                │
+└────────┬────────┘                │
+         │                         │
+         ▼                         ▼
+┌─────────────────┐      ┌──────────────────────┐
+│ GitHub Actions  │      │  Supabase Edge Fn    │
+│ (Auto Scraper)  │      │  (On-Demand Scraper) │
+└────────┬────────┘      └──────────┬───────────┘
+         │                          │
+         └──────────┬───────────────┘
+                    ▼
+         ┌──────────────────┐
+         │  YouTube/TikTok  │
+         │  (Data Source)   │
+         └──────────────────┘
 ```
 
 ## Cost Structure
