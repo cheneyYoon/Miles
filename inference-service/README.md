@@ -14,10 +14,11 @@ AI-powered multimodal inference service for predicting short-form video virality
 
 ## 🎯 Overview
 
-Miles uses a **multimodal deep learning model** combining:
+Miles uses a **deep learning model** combining:
 - **BERT** (text encoder) - Analyzes titles and descriptions
-- **ResNet-50** (vision encoder) - Processes thumbnails
-- **Engagement metrics** - View counts, likes, comments, etc.
+- **Engagement metrics** - View counts, likes, comments, duration, etc.
+
+**Note**: Current model version uses text + scalar features only. Vision encoder (ResNet-50) support is available but not enabled in this deployment.
 
 **Performance**:
 - AUROC: **0.855** (target: 0.75)
@@ -75,17 +76,18 @@ Get model architecture details
 Input (Video Metadata)
 ├── Text (Title + Description)
 │   └── BERT-base-uncased (768-dim)
-├── Image (Thumbnail)
-│   └── ResNet-50 (2048-dim)
 └── Scalars (Engagement metrics)
-    └── 18 features
+    └── 18 features (views, likes, comments, duration, etc.)
 
-    ↓ Fusion (3-layer MLP)
+    ↓ Concatenate (786-dim)
+    ↓ Fusion MLP (786 → 1024 → 256)
 
 Output
 ├── Classification: Viral or Not (binary)
 └── Regression: View Velocity (float)
 ```
+
+**Current Configuration**: Text + Scalars only (Vision encoder available but disabled)
 
 ## 🔧 Usage Example
 
@@ -134,9 +136,9 @@ curl -X POST https://cheneyyoon-miles-inference.hf.space/predict \
 
 - **Framework**: FastAPI
 - **ML Framework**: PyTorch 2.x
-- **Text Model**: HuggingFace Transformers (BERT)
-- **Vision Model**: torchvision (ResNet-50)
+- **Text Model**: HuggingFace Transformers (BERT-base-uncased)
 - **Deployment**: HuggingFace Spaces (Docker)
+- **Container**: Python 3.11, FastAPI, PyTorch 2.x
 
 ## 📈 Performance Metrics
 

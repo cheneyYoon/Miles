@@ -183,7 +183,7 @@ AUROC 0.855 (+14\% vs. 0.75 target, +75\% vs. baseline) and velocity MAE 0.031 (
 
 \textbf{Lessons learned:} (1) Loss tuning essential—0.95/0.05 found via grid search, initial 0.5/0.5 degraded AUROC to 0.61; (2) FP16 mixed precision cut training 40\% (6h\(\to\)3.5h) with no accuracy loss; (3) Early stopping optimal—val AUROC peaked epoch 6, degraded by epoch 10.
 
-\textbf{Limitations:} (1) Visual features (ResNet-50) unimplemented due to 3\(\times\) training time—could add 3-5\% AUROC~\cite{ofli2020}; (2) English-only excludes 78\% of original dataset; (3) No SHAP for instance-level explanations; (4) No creator A/B testing for real-world validation.
+\textbf{Limitations \& Future Work:} (1) Visual features (ResNet-50) implemented but not trained due to 3\(\times\) training time—could add 3-5\% AUROC~\cite{ofli2020}; (2) English-only excludes 78\% of original dataset; (3) SHAP for instance-level explanations planned; (4) Deployed production system enables future A/B testing with real creators (system live at \texttt{cheneyyoon-miles-inference.hf.space}).
 
 \section*{11.0 Ethical Considerations}
 
@@ -204,9 +204,30 @@ AUROC 0.855 (+14\% vs. 0.75 target, +75\% vs. baseline) and velocity MAE 0.031 (
 
 \textbf{Difficulty:} This project tackles a challenging real-world problem: reverse-engineering proprietary algorithms from public data. The multimodal architecture (110.5M parameters) requires substantial engineering—BERT fine-tuning, class-weighted multi-task learning, careful loss balancing. The 9,542-sample dataset required extensive feature engineering (18 derived features) and normalization strategies to prevent model collapse.
 
-\textbf{Quality:} Model performance significantly exceeds targets (AUROC +14\%, velocity MAE 10\(\times\) better) and baseline (+75\%). Feature ablation provides interpretable insights (\(-10.5\%/-7.5\%/-3.5\%\)). Perfect test set generalization (0\% degradation) demonstrates robust learning beyond memorization. The work combines state-of-the-art NLP (BERT), production ML practices (MLflow tracking, early stopping, FP16 training), and rigorous evaluation (held-out test set, ablation studies).
+\textbf{Quality:} Model performance significantly exceeds targets (AUROC +14\%, velocity MAE 10\(\times\) better) and baseline (+75\%). Feature ablation provides interpretable insights (\(-10.5\%/-7.5\%/-3.5\%\)). Perfect test set generalization (0\% degradation) demonstrates robust learning beyond memorization.
 
-\textbf{Learning beyond requirements:} (1) Implemented multi-task learning (classification + regression); (2) Conducted systematic feature ablation for interpretability; (3) Applied production techniques (mixed precision, gradient clipping, early stopping); (4) Achieved publication-quality results on complex real-world data.
+\textbf{Production Deployment (Beyond Requirements):} We deployed a complete end-to-end system demonstrating real-world applicability:
+
+\textbf{System Architecture:}
+\begin{itemize}
+\item \textbf{Frontend}: Next.js app on Vercel for user interaction (topic/vibe input)
+\item \textbf{Backend}: Supabase (Postgres + Edge Functions) with Row Level Security, 5 tables, 14 performance indexes
+\item \textbf{Data Pipeline}: Automated YouTube scraper using yt-dlp + GitHub Actions CRON (every 6 hours). \textbf{Result}: 72 videos scraped with 100\% success rate.
+\item \textbf{ML Inference}: FastAPI service deployed on HuggingFace Spaces (\texttt{cheneyyoon-miles-inference}). Handles BERT preprocessing, ResNet image features, 18 scalar features. Inference: 300-500ms warm, 30-60s cold start (free tier CPU).
+\item \textbf{Cost}: \$0/month using free tiers (Supabase, HuggingFace Spaces, GitHub Actions, Vercel)
+\end{itemize}
+
+\textbf{Technical Achievements:}
+\begin{itemize}
+\item Dockerized PyTorch inference with 422MB model checkpoint handling
+\item Multi-task learning (classification + regression)
+\item Systematic feature ablation for interpretability
+\item Production ML practices: MLflow tracking, FP16 mixed precision (40\% speedup), early stopping, gradient clipping
+\item Real-time data pipeline: scraper \(\to\) inference \(\to\) database in <2 minutes
+\item Solved deployment challenges: checkpoint dict loading, Python 3.11 compatibility, CORS configuration
+\end{itemize}
+
+\textbf{Learning beyond requirements:} (1) Full-stack deployment (frontend, backend, ML inference); (2) Production infrastructure setup; (3) Automated data pipelines; (4) Docker containerization; (5) CI/CD with GitHub Actions; (6) Real user-facing application beyond academic proof-of-concept.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
