@@ -1,6 +1,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import Anthropic from 'npm:@anthropic-ai/sdk@0.32.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,41 +54,35 @@ Deno.serve(async (req) => {
     const patterns = extractPatterns(topCandidates)
     console.log('Patterns extracted:', patterns)
 
-    // 3. Generate recommendations using Claude API
+    // 3. Generate recommendations using Claude API with official SDK
     const prompt = buildPrompt(topic, vibe, patterns, topCandidates.slice(0, 5))
     console.log('Calling Claude API...')
 
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.8
-      })
+    const anthropic = new Anthropic({
+      apiKey: Deno.env.get('ANTHROPIC_API_KEY') ?? '',
     })
 
-    if (!claudeResponse.ok) {
-      const errorText = await claudeResponse.text()
-      console.error('Claude API error:', errorText)
-      throw new Error(`Claude API error: ${claudeResponse.status} - ${errorText}`)
-    }
+    const message = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1024,
+      temperature: 0.8,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    })
 
-    const claudeResult = await claudeResponse.json()
     console.log('Claude response received')
+    console.log('Usage:', message.usage)
 
     // Parse recommendations from Claude's response
-    const recommendations = parseRecommendations(claudeResult.content[0].text)
+    const textContent = message.content.find(block => block.type === 'text')
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in Claude response')
+    }
+    const recommendations = parseRecommendations(textContent.text)
 
     // 4. Save query to database (if userId provided)
     if (userId) {
@@ -193,7 +188,8 @@ REQUIREMENTS:
 5. Make ideas fresh and unique, not just copies of existing videos
 
 OUTPUT FORMAT:
-Return ONLY a JSON array with exactly 3 ideas in this format:
+Return ONLY valid JSON. No markdown, no explanations, just the raw JSON array.
+The array must contain exactly 3 objects with this structure:
 [
   {
     "title": "Exact video title to use",
@@ -209,39 +205,84 @@ Return ONLY a JSON array with exactly 3 ideas in this format:
   }
 ]
 
+IMPORTANT:
+- Use only standard double quotes ("), not smart quotes
+- Escape any quotes within the title or reasoning text
+- Return ONLY the JSON array, nothing else
+
 Generate creative, data-driven video ideas now:`
 }
 
 function parseRecommendations(content: string): any[] {
   try {
-    // Try to extract JSON from markdown code blocks or plain text
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) ||
-                     content.match(/```\s*([\s\S]*?)\s*```/) ||
-                     content.match(/\[[\s\S]*\]/)
+    console.log('Parsing Claude response, length:', content.length)
+    console.log('Raw content:', content)
 
-    if (jsonMatch) {
-      const jsonStr = jsonMatch[1] || jsonMatch[0]
-      const parsed = JSON.parse(jsonStr)
-
-      // Validate format
+    // First, try parsing the content directly as JSON
+    try {
+      const trimmed = content.trim()
+      const parsed = JSON.parse(trimmed)
       if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log('Successfully parsed JSON directly')
         return parsed.map(item => ({
           title: item.title || 'Untitled',
           reasoning: item.reasoning || item.reason || item.explanation || 'No reasoning provided'
         }))
       }
+    } catch (e) {
+      console.error('Failed to parse full content as JSON:', e)
     }
 
-    // Fallback: try parsing entire content as JSON
-    const parsed = JSON.parse(content)
-    if (Array.isArray(parsed)) {
-      return parsed
+    // Try to extract JSON from markdown code blocks
+    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (codeBlockMatch) {
+      try {
+        const parsed = JSON.parse(codeBlockMatch[1])
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('Successfully parsed from code block')
+          return parsed.map(item => ({
+            title: item.title || 'Untitled',
+            reasoning: item.reasoning || item.reason || item.explanation || 'No reasoning provided'
+          }))
+        }
+      } catch (e) {
+        console.error('Failed to parse code block JSON:', e)
+      }
     }
 
-    // Last resort: return content as single recommendation
+    // Try to find and extract just the JSON array
+    const arrayStart = content.indexOf('[')
+    const arrayEnd = content.lastIndexOf(']')
+    if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
+      try {
+        let jsonStr = content.substring(arrayStart, arrayEnd + 1)
+        console.log('Extracted JSON string (first 500 chars):', jsonStr.substring(0, 500))
+
+        // Try to fix common JSON issues
+        // Replace smart quotes with regular quotes
+        jsonStr = jsonStr
+          .replace(/[\u201C\u201D]/g, '"')  // Smart double quotes
+          .replace(/[\u2018\u2019]/g, "'")  // Smart single quotes
+
+        const parsed = JSON.parse(jsonStr)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('Successfully parsed extracted array')
+          return parsed.map(item => ({
+            title: item.title || 'Untitled',
+            reasoning: item.reasoning || item.reason || item.explanation || 'No reasoning provided'
+          }))
+        }
+      } catch (e) {
+        console.error('Failed to parse extracted array:', e)
+        console.error('Error details:', e.message)
+      }
+    }
+
+    // Last resort: return error with preview
+    console.error('All parsing attempts failed')
     return [{
-      title: 'Parse Error',
-      reasoning: 'Could not parse recommendations. Raw response: ' + content.substring(0, 200)
+      title: 'Parse Error - Please Try Again',
+      reasoning: 'Claude returned an unexpected format. Content preview: ' + content.substring(0, 200)
     }]
   } catch (error) {
     console.error('Parse error:', error)
