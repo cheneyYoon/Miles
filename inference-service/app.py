@@ -103,13 +103,16 @@ def load_model():
     if isinstance(checkpoint, dict):
         # It's a checkpoint dict, instantiate model and load state dict
         logger.info("Loading from checkpoint dict")
+
+        # IMPORTANT: The checkpoint was trained without vision encoder
+        # Fusion input: 768 (BERT) + 18 (scalars) = 786
         model = MultimodalViralityPredictor(
             num_scalar_features=18,  # From phase1_results.json
             freeze_encoders=True,
             fusion_hidden_dims=(1024, 256),
             dropout_rates=(0.3, 0.2),
             use_text=True,
-            use_vision=True
+            use_vision=False  # Checkpoint doesn't include vision encoder
         )
 
         # Load state dict
@@ -264,8 +267,13 @@ async def predict(req: PredictionRequest):
         with torch.no_grad():
             # Preprocess inputs
             text_inputs = preprocess_text(req.title, req.description or "")
-            image_input = preprocess_image(req.thumbnail_url)
             scalar_input = compute_scalars(req)
+
+            # Only preprocess image if model uses vision
+            if model.use_vision:
+                image_input = preprocess_image(req.thumbnail_url)
+            else:
+                image_input = None
 
             # Run inference
             classification_logits, velocity_pred = model(
@@ -307,16 +315,26 @@ def model_info():
     param_count = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+    components = {
+        "fusion": "3-layer MLP"
+    }
+
+    if model.use_text:
+        components["text_encoder"] = "BERT (bert-base-uncased)"
+    if model.use_vision:
+        components["vision_encoder"] = "ResNet-50"
+
     return {
         "total_parameters": param_count,
         "trainable_parameters": trainable_params,
         "device": str(device),
         "model_type": "MultimodalViralityPredictor",
-        "components": {
-            "text_encoder": "BERT (bert-base-uncased)",
-            "vision_encoder": "ResNet-50",
-            "fusion": "3-layer MLP"
-        }
+        "modalities": {
+            "text": model.use_text,
+            "vision": model.use_vision,
+            "scalars": True
+        },
+        "components": components
     }
 
 
