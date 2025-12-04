@@ -1,0 +1,61 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+.vercel
+
+# ML / Data
+*.pkl
+*.h5
+*.onnx
+checkpoints/
+experiments/
+mlruns/
+*.parquet
+data/raw/
+data/processed/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
