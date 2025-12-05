@@ -67,6 +67,20 @@ Deno.serve(async (req) => {
 
         if (!scrapeResponse.ok) {
           const errorText = await scrapeResponse.text()
+          console.error('Scraper API error:', errorText)
+
+          // Check if it's a YouTube bot detection issue
+          if (errorText.includes('Sign in to confirm') || errorText.includes('not a bot')) {
+            return new Response(
+              JSON.stringify({
+                error: 'YouTube temporarily blocked scraping. Please try again in a few minutes or try a different topic.',
+                details: 'Our scraper was flagged as a bot. This happens occasionally on free hosting.',
+                suggestion: 'Try: a different topic, or wait 2-3 minutes and retry'
+              }),
+              { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
           throw new Error(`Scraper API failed (${scrapeResponse.status}): ${errorText}`)
         }
 
