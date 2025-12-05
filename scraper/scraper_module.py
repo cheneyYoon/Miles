@@ -5,6 +5,8 @@ Can be called as a function by API services.
 """
 
 import yt_dlp
+import os
+import tempfile
 from datetime import datetime
 from typing import List, Dict, Optional
 
@@ -45,10 +47,22 @@ def scrape_topic(
             'Accept-Language': 'en-us,en;q=0.5',
             'Sec-Fetch-Mode': 'navigate',
         },
-        'sleep_interval': 1,  # Add 1 second delay between requests
-        'max_sleep_interval': 3,
+        'sleep_interval': 2,  # 2 second delay to avoid rate limits
+        'max_sleep_interval': 5,
         'extractor_retries': 3,  # Retry failed extractions
     }
+
+    # Handle cookies if provided via environment variable
+    cookie_file = None
+    youtube_cookies = os.environ.get('YOUTUBE_COOKIES')
+
+    if youtube_cookies:
+        # Write cookies to temporary file
+        cookie_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
+        cookie_file.write(youtube_cookies)
+        cookie_file.close()
+        ydl_opts['cookiefile'] = cookie_file.name
+        print(f"Using YouTube cookies for authentication")
 
     videos = []
 
@@ -82,6 +96,10 @@ def scrape_topic(
 
     except Exception as e:
         raise Exception(f"Scraping failed for topic '{topic}': {str(e)}")
+    finally:
+        # Clean up temporary cookie file
+        if cookie_file and os.path.exists(cookie_file.name):
+            os.unlink(cookie_file.name)
 
     return videos
 
