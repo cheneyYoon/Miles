@@ -178,8 +178,19 @@ export default function Home() {
 
         {error && (
           <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700">
-            <p className="font-semibold mb-1">❌ Error</p>
-            {error}
+            <p className="font-semibold mb-2">❌ Error</p>
+            <p className="mb-3">{error}</p>
+            {error.includes('bot') || error.includes('blocked') || error.includes('YouTube') ? (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                <p className="font-semibold mb-1">💡 Suggestions:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Try a different topic (e.g., "tech reviews", "cooking", "fitness")</li>
+                  <li>Wait 2-3 minutes and try again</li>
+                  <li>Use broader search terms</li>
+                </ul>
+                <p className="mt-2 text-xs">Note: Some topics trigger YouTube's bot detection on free hosting. Most topics work fine!</p>
+              </div>
+            ) : null}
           </div>
         )}
       </form>
