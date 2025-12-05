@@ -380,7 +380,8 @@ After removal, the updated `.gitignore` will prevent it from being re-added.
 - **GitHub Repository:** [https://github.com/cheneyYoon/Miles](https://github.com/cheneyYoon/Miles)
 - **Colab Training:** [Link](https://drive.google.com/file/d/1WB3J8hP0tj89YeUg95WltV_LW2nqq_HJ/view?usp=sharing)
 - **Inference API:** [https://cheneyyoon-miles-inference.hf.space](https://cheneyyoon-miles-inference.hf.space)
-- **Frontend App:** [Vercel deployment URL]
+- **Scraper API:** [https://miles-scraper.onrender.com](https://miles-scraper.onrender.com)
+- **Frontend App:** [Your Vercel URL here]
 - **Dataset:** [HuggingFace Dataset](https://huggingface.co/datasets/tarekmasryo/YouTube-Shorts-TikTok-Trends-2025)
 
 ## Contact
